@@ -1,4 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CApiFFI #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
@@ -32,8 +34,13 @@ openDirStream name = withFilePath name $ \s ->
     throwErrnoPathIfNullRetry "openDirStream" name $ c_opendir s
 {-# INLINE openDirStream #-}
 
+#if MIN_VERSION_unix(2,7,2)
+foreign import capi unsafe "HsUnix.h opendir"
+   c_opendir :: CString  -> IO (Ptr CDir)
+#else
 foreign import ccall unsafe "__hsunix_opendir"
    c_opendir :: CString  -> IO (Ptr CDir)
+#endif
 
 getDirectoryContentsAndAttrs :: RawFilePath -> IO [(RawFilePath, CUInt)]
 getDirectoryContentsAndAttrs path = do
